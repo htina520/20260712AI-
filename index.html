@@ -1,0 +1,828 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>淨零生活轉型互動商場</title>
+  <style>
+    :root {
+      --bg: #eef4f1;
+      --panel: #ffffff;
+      --ink: #17231d;
+      --muted: #607067;
+      --line: #d4dfd8;
+      --green: #207448;
+      --green-soft: #e1f1e7;
+      --blue: #256f93;
+      --blue-soft: #e3f0f6;
+      --amber: #ad6424;
+      --amber-soft: #f6eadb;
+      --red: #b54a37;
+      --red-soft: #f7e4df;
+      --shadow: 0 12px 30px rgba(29, 52, 40, 0.12);
+      --radius: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      min-height: 100%;
+      min-width: 0;
+    }
+
+    body {
+      margin: 0;
+      overflow: hidden;
+      color: var(--ink);
+      background:
+        linear-gradient(135deg, rgba(225, 241, 231, 0.96), rgba(227, 240, 246, 0.88) 48%, rgba(246, 234, 219, 0.66)),
+        var(--bg);
+      font-family: "Microsoft JhengHei", "Noto Sans TC", Arial, sans-serif;
+      line-height: 1.28;
+    }
+
+    button {
+      font: inherit;
+    }
+
+    .app {
+      width: min(1200px, calc(100vw - 24px));
+      height: 100vh;
+      margin: 0 auto;
+      padding: 12px 0;
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      gap: 9px;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin: 0;
+    }
+
+    .top {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 12px;
+    }
+
+    h1 {
+      font-size: clamp(1.45rem, 3vw, 2.28rem);
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .reset-button {
+      min-height: 40px;
+      border: 0;
+      border-radius: var(--radius);
+      padding: 9px 14px;
+      background: var(--ink);
+      color: #fff;
+      cursor: pointer;
+      font-weight: 900;
+    }
+
+    .dashboard {
+      display: grid;
+      grid-template-columns: 1.25fr repeat(4, minmax(0, 0.7fr));
+      gap: 9px;
+    }
+
+    .status-board,
+    .metric,
+    .zone,
+    .timeline {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.94);
+      box-shadow: var(--shadow);
+    }
+
+    .status-board,
+    .metric {
+      min-width: 0;
+      padding: 10px 12px;
+      display: grid;
+      align-content: center;
+      gap: 4px;
+    }
+
+    .label,
+    .metric-label,
+    .zone-label {
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 900;
+    }
+
+    .status-text {
+      min-width: 0;
+      font-weight: 900;
+      font-size: 0.92rem;
+    }
+
+    .metric-value {
+      font-size: clamp(1.14rem, 2.1vw, 1.78rem);
+      line-height: 1;
+      font-weight: 950;
+      letter-spacing: 0;
+    }
+
+    .metric-unit {
+      color: var(--muted);
+      font-size: 0.72rem;
+      font-weight: 850;
+      white-space: nowrap;
+    }
+
+    .platform {
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 1.03fr 1.17fr 0.9fr;
+      gap: 9px;
+    }
+
+    .zone {
+      min-height: 0;
+      padding: 10px;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 8px;
+      overflow: hidden;
+    }
+
+    .zone-head {
+      min-width: 0;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .zone h2 {
+      font-size: 1.05rem;
+      letter-spacing: 0;
+    }
+
+    .zone-copy {
+      color: var(--muted);
+      font-size: 0.76rem;
+    }
+
+    .badge {
+      flex: 0 0 auto;
+      min-width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: var(--green-soft);
+      color: var(--green);
+      font-weight: 950;
+    }
+
+    .mall-zone .badge {
+      background: var(--amber-soft);
+      color: var(--amber);
+    }
+
+    .cart-zone .badge {
+      background: var(--blue-soft);
+      color: var(--blue);
+    }
+
+    .catalog,
+    .shelf,
+    .cart-list {
+      min-height: 0;
+      border: 1px dashed var(--line);
+      border-radius: var(--radius);
+      background: #fbfdfb;
+      padding: 8px;
+      overflow: auto;
+    }
+
+    .catalog {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-content: start;
+      gap: 5px;
+    }
+
+    .shelf {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-content: start;
+      gap: 7px;
+    }
+
+    .cart-list {
+      display: grid;
+      align-content: start;
+      gap: 7px;
+    }
+
+    .product-button,
+    .product-card,
+    .cart-item {
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+    }
+
+    .product-button {
+      min-height: 55px;
+      padding: 5px;
+      cursor: pointer;
+      display: grid;
+      grid-template-columns: 34px 1fr;
+      gap: 6px;
+      align-items: center;
+      text-align: left;
+      color: var(--ink);
+    }
+
+    .product-button:hover:not(:disabled) {
+      border-color: rgba(32, 116, 72, 0.55);
+      box-shadow: 0 8px 18px rgba(29, 52, 40, 0.13);
+    }
+
+    .product-button:disabled {
+      cursor: not-allowed;
+      opacity: 0.48;
+    }
+
+    .mini-art {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 7px;
+      background: var(--green-soft);
+      overflow: hidden;
+    }
+
+    .product-button.food .mini-art,
+    .product-card.food .mini-art,
+    .cart-item.food .mini-art {
+      background: var(--red-soft);
+    }
+
+    .product-button.veg .mini-art,
+    .product-card.veg .mini-art,
+    .cart-item.veg .mini-art {
+      background: var(--green-soft);
+    }
+
+    .product-button.appliance .mini-art,
+    .product-card.appliance .mini-art,
+    .cart-item.appliance .mini-art,
+    .product-button.vehicle .mini-art,
+    .product-card.vehicle .mini-art,
+    .cart-item.vehicle .mini-art {
+      background: var(--blue-soft);
+    }
+
+    .mini-art svg {
+      width: 31px;
+      height: 31px;
+      display: block;
+    }
+
+    .product-info {
+      min-width: 0;
+      display: grid;
+      gap: 2px;
+    }
+
+    .product-name {
+      font-size: 0.78rem;
+      font-weight: 950;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .product-meta,
+    .product-carbon,
+    .product-origin {
+      color: var(--muted);
+      font-size: 0.61rem;
+      font-weight: 750;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .money {
+      color: var(--amber);
+      font-weight: 950;
+    }
+
+    .product-card {
+      padding: 7px;
+      display: grid;
+      grid-template-columns: 42px 1fr;
+      gap: 7px;
+      animation: pop 320ms ease;
+    }
+
+    .product-card .count {
+      width: fit-content;
+      border-radius: 999px;
+      padding: 2px 6px;
+      background: var(--green-soft);
+      color: var(--green);
+      font-size: 0.68rem;
+      font-weight: 950;
+    }
+
+    .buy-button {
+      width: 100%;
+      margin-top: 4px;
+      border: 0;
+      border-radius: 6px;
+      padding: 5px 7px;
+      background: var(--blue);
+      color: white;
+      cursor: pointer;
+      font-weight: 900;
+      font-size: 0.72rem;
+    }
+
+    .cancel-button {
+      width: 100%;
+      margin-top: 4px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 5px 7px;
+      background: #fff;
+      color: var(--red);
+      cursor: pointer;
+      font-weight: 900;
+      font-size: 0.72rem;
+    }
+
+    .button-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5px;
+    }
+
+    .cart-item {
+      padding: 7px;
+      display: grid;
+      grid-template-columns: 42px 1fr;
+      gap: 7px;
+      align-items: center;
+      animation: moveIn 320ms ease;
+    }
+
+    .empty {
+      align-self: center;
+      justify-self: center;
+      text-align: center;
+      color: var(--muted);
+      padding: 18px 8px;
+      font-size: 0.86rem;
+    }
+
+    .timeline {
+      min-height: 0;
+      padding: 9px 11px;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 12px;
+      align-items: start;
+    }
+
+    .timeline h2 {
+      font-size: 0.96rem;
+      white-space: nowrap;
+    }
+
+    .log-list {
+      min-width: 0;
+      max-height: 58px;
+      overflow: auto;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 4px;
+    }
+
+    .log-list li,
+    .empty-log {
+      color: var(--muted);
+      font-size: 0.74rem;
+    }
+
+    .log-list strong {
+      color: var(--ink);
+    }
+
+    @keyframes pop {
+      from {
+        transform: translateY(8px) scale(0.98);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+      }
+    }
+
+    @keyframes moveIn {
+      from {
+        transform: translateX(10px) scale(0.98);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateX(0) scale(1);
+        opacity: 1;
+      }
+    }
+
+    @media (max-width: 860px), (orientation: portrait) {
+      body {
+        overflow: auto;
+      }
+
+      .app {
+        height: auto;
+        min-height: 100vh;
+      }
+
+      .top,
+      .dashboard,
+      .platform,
+      .timeline {
+        grid-template-columns: 1fr;
+      }
+
+      .catalog,
+      .shelf {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="top">
+      <div>
+        <h1>淨零生活轉型互動商場</h1>
+        <p class="subtitle">企業上架商品會計入製造碳排；人民購買時會依運輸距離額外增加碳排，並累積金錢支出。</p>
+      </div>
+      <button class="reset-button" id="resetButton" type="button">重新開始</button>
+    </header>
+
+    <section class="dashboard" aria-label="總覽">
+      <div class="status-board">
+        <div class="label">目前流程</div>
+        <div class="status-text" id="globalStatus">請先從企業商品庫上架商品到商場。</div>
+      </div>
+      <article class="metric">
+        <div class="metric-label">總碳排</div>
+        <div class="metric-value"><span id="totalEmission">0.0</span></div>
+        <div class="metric-unit">kg CO2e</div>
+      </article>
+      <article class="metric">
+        <div class="metric-label">製造碳排</div>
+        <div class="metric-value"><span id="manufactureEmission">0.0</span></div>
+        <div class="metric-unit">企業上架商品</div>
+      </article>
+      <article class="metric">
+        <div class="metric-label">運輸碳排</div>
+        <div class="metric-value"><span id="transportEmission">0.0</span></div>
+        <div class="metric-unit">人民購買配送</div>
+      </article>
+      <article class="metric">
+        <div class="metric-label">人民支出</div>
+        <div class="metric-value">$<span id="moneySpent">0</span></div>
+        <div class="metric-unit">商品金額</div>
+      </article>
+    </section>
+
+    <section class="platform" aria-label="企業、商場與購物車">
+      <article class="zone business-zone">
+        <div class="zone-head">
+          <div>
+            <div class="zone-label">企業端</div>
+            <h2>商品庫</h2>
+            <p class="zone-copy">點商品上架，加入該商品本身製造碳排。</p>
+          </div>
+          <div class="badge" aria-hidden="true">企</div>
+        </div>
+        <div class="catalog" id="catalog"></div>
+      </article>
+
+      <article class="zone mall-zone">
+        <div class="zone-head">
+          <div>
+            <div class="zone-label">互動平台</div>
+            <h2>線上商場</h2>
+            <p class="zone-copy">有庫存後，人民才能購買；國外進口運輸碳排較高。</p>
+          </div>
+          <div class="badge" aria-hidden="true">商</div>
+        </div>
+        <div class="shelf" id="mallShelf"></div>
+      </article>
+
+      <article class="zone cart-zone">
+        <div class="zone-head">
+          <div>
+            <div class="zone-label">人民端</div>
+            <h2>購物車</h2>
+            <p class="zone-copy">購買後累積商品金額與運輸碳排。</p>
+          </div>
+          <div class="badge" aria-hidden="true">民</div>
+        </div>
+        <div class="cart-list" id="cartList"></div>
+      </article>
+    </section>
+
+    <section class="timeline" aria-label="最近過程">
+      <h2>最近過程</h2>
+      <div id="logContainer"></div>
+    </section>
+  </main>
+
+  <script>
+    const products = [
+      { id: 'steak', name: '牛排', category: 'food', price: 380, manufacture: 18.0, origin: '國外進口', distance: 9800, transport: 3.6 },
+      { id: 'fish', name: '魚排', category: 'food', price: 220, manufacture: 6.8, origin: '國內沿海', distance: 220, transport: 0.4 },
+      { id: 'can', name: '罐頭', category: 'food', price: 55, manufacture: 2.4, origin: '國外進口', distance: 5200, transport: 1.7 },
+      { id: 'chickenRice', name: '雞肉飯', category: 'food', price: 95, manufacture: 4.1, origin: '國內生產', distance: 80, transport: 0.2 },
+      { id: 'curry', name: '咖哩飯', category: 'food', price: 130, manufacture: 3.6, origin: '國內生產', distance: 120, transport: 0.3 },
+      { id: 'stirVeg', name: '清炒食蔬', category: 'veg', price: 90, manufacture: 1.1, origin: '在地農場', distance: 35, transport: 0.1 },
+      { id: 'salad', name: '沙拉', category: 'veg', price: 120, manufacture: 1.4, origin: '國內農場', distance: 95, transport: 0.2 },
+      { id: 'beefNoodle', name: '牛肉麵', category: 'food', price: 180, manufacture: 7.8, origin: '國內生產', distance: 140, transport: 0.3 },
+      { id: 'fridge', name: '冰箱', category: 'appliance', price: 18000, manufacture: 210.0, origin: '國外進口', distance: 7600, transport: 14.0 },
+      { id: 'oldAc', name: '傳統冷氣', category: 'appliance', price: 22000, manufacture: 180.0, origin: '國外進口', distance: 6800, transport: 12.5 },
+      { id: 'efficientAc', name: '節能冷氣', category: 'appliance', price: 28000, manufacture: 160.0, origin: '國內組裝', distance: 260, transport: 2.0 },
+      { id: 'microwave', name: '微波爐', category: 'appliance', price: 3200, manufacture: 45.0, origin: '國外進口', distance: 4300, transport: 4.2 },
+      { id: 'riceCooker', name: '電鍋', category: 'appliance', price: 2600, manufacture: 32.0, origin: '國內生產', distance: 180, transport: 1.0 },
+      { id: 'ev', name: '電動車', category: 'vehicle', price: 1200000, manufacture: 7600.0, origin: '國外進口', distance: 9000, transport: 420.0 }
+    ];
+
+    const productMap = Object.fromEntries(products.map((product) => [product.id, product]));
+    const maxLogs = 7;
+
+    const initialState = () => ({
+      totalEmission: 0,
+      manufactureEmission: 0,
+      transportEmission: 0,
+      moneySpent: 0,
+      stock: Object.fromEntries(products.map((product) => [product.id, 0])),
+      cart: Object.fromEntries(products.map((product) => [product.id, 0])),
+      logs: [],
+      globalStatus: '請先從企業商品庫上架商品到商場。'
+    });
+
+    let state = initialState();
+
+    const elements = {
+      totalEmission: document.querySelector('#totalEmission'),
+      manufactureEmission: document.querySelector('#manufactureEmission'),
+      transportEmission: document.querySelector('#transportEmission'),
+      moneySpent: document.querySelector('#moneySpent'),
+      globalStatus: document.querySelector('#globalStatus'),
+      catalog: document.querySelector('#catalog'),
+      mallShelf: document.querySelector('#mallShelf'),
+      cartList: document.querySelector('#cartList'),
+      logContainer: document.querySelector('#logContainer'),
+      resetButton: document.querySelector('#resetButton')
+    };
+
+    function formatEmission(value) {
+      return value.toLocaleString('zh-TW', { maximumFractionDigits: 1, minimumFractionDigits: 1 });
+    }
+
+    function formatMoney(value) {
+      return value.toLocaleString('zh-TW');
+    }
+
+    function productArt(category) {
+      const color = {
+        food: ['#b54a37', '#f3b29e'],
+        veg: ['#207448', '#b7df89'],
+        appliance: ['#256f93', '#b9d9e8'],
+        vehicle: ['#256f93', '#c7d8e5']
+      }[category];
+
+      if (category === 'veg') {
+        return `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M9 31c8-17 22-21 32-17-1 17-17 25-32 17z" fill="${color[1]}"/><path d="M14 31c8-4 15-9 22-16" stroke="${color[0]}" stroke-width="4" stroke-linecap="round"/></svg>`;
+      }
+
+      if (category === 'appliance') {
+        return `<svg viewBox="0 0 48 48" aria-hidden="true"><rect x="13" y="7" width="22" height="34" rx="4" fill="${color[1]}" stroke="${color[0]}" stroke-width="3"/><path d="M13 20h22M29 13v4M29 27v8" stroke="${color[0]}" stroke-width="3" stroke-linecap="round"/></svg>`;
+      }
+
+      if (category === 'vehicle') {
+        return `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M8 27l6-10h20l6 10v9H8z" fill="${color[1]}" stroke="${color[0]}" stroke-width="3" stroke-linejoin="round"/><circle cx="16" cy="36" r="4" fill="${color[0]}"/><circle cx="34" cy="36" r="4" fill="${color[0]}"/><path d="M23 20l-3 6h6l-3 6" fill="none" stroke="${color[0]}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+      }
+
+      return `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M8 25c0-11 12-19 25-13 11 5 12 18 2 24-12 7-27 1-27-11z" fill="${color[0]}"/><path d="M16 21c5-5 13-5 20 0" stroke="${color[1]}" stroke-width="5" stroke-linecap="round"/><circle cx="26" cy="27" r="6" fill="#f3d0bc"/></svg>`;
+    }
+
+    function addLog(message) {
+      state.logs.unshift(message);
+      state.logs = state.logs.slice(0, maxLogs);
+    }
+
+    function listProduct(productId) {
+      const product = productMap[productId];
+      state.stock[productId] += 1;
+      state.manufactureEmission += product.manufacture;
+      state.totalEmission += product.manufacture;
+      state.globalStatus = `企業上架 ${product.name}：製造碳排 +${formatEmission(product.manufacture)} kg CO2e，價格 $${formatMoney(product.price)}。`;
+      addLog(`<strong>上架</strong> ${product.name}：製造 +${formatEmission(product.manufacture)} kg CO2e，售價 $${formatMoney(product.price)}。`);
+      render();
+    }
+
+    function buyProduct(productId) {
+      const product = productMap[productId];
+      if (state.stock[productId] <= 0) {
+        state.globalStatus = `商場目前沒有 ${product.name}，請企業先上架。`;
+        render();
+        return;
+      }
+
+      state.stock[productId] -= 1;
+      state.cart[productId] += 1;
+      state.transportEmission += product.transport;
+      state.totalEmission += product.transport;
+      state.moneySpent += product.price;
+      state.globalStatus = `人民購買 ${product.name}：${product.origin}、運輸 ${formatMoney(product.distance)} km，額外運輸碳排 +${formatEmission(product.transport)} kg CO2e。`;
+      addLog(`<strong>購買</strong> ${product.name}：$${formatMoney(product.price)}，${product.distance} km 運輸 +${formatEmission(product.transport)} kg CO2e。`);
+      render();
+    }
+
+    function cancelListing(productId) {
+      const product = productMap[productId];
+      if (state.stock[productId] <= 0) {
+        state.globalStatus = `商場目前沒有可取消上架的 ${product.name}。`;
+        render();
+        return;
+      }
+
+      state.stock[productId] -= 1;
+      state.manufactureEmission = Math.max(0, state.manufactureEmission - product.manufacture);
+      state.totalEmission = Math.max(0, state.totalEmission - product.manufacture);
+      state.globalStatus = `已取消上架 ${product.name}：製造碳排 -${formatEmission(product.manufacture)} kg CO2e。`;
+      addLog(`<strong>取消上架</strong> ${product.name}：製造 -${formatEmission(product.manufacture)} kg CO2e。`);
+      render();
+    }
+
+    function cancelPurchase(productId) {
+      const product = productMap[productId];
+      if (state.cart[productId] <= 0) {
+        state.globalStatus = `購物車目前沒有可取消購買的 ${product.name}。`;
+        render();
+        return;
+      }
+
+      state.cart[productId] -= 1;
+      state.stock[productId] += 1;
+      state.transportEmission = Math.max(0, state.transportEmission - product.transport);
+      state.totalEmission = Math.max(0, state.totalEmission - product.transport);
+      state.moneySpent = Math.max(0, state.moneySpent - product.price);
+      state.globalStatus = `已取消購買 ${product.name}：退回商場庫存，運輸碳排 -${formatEmission(product.transport)} kg CO2e，支出 -$${formatMoney(product.price)}。`;
+      addLog(`<strong>取消購買</strong> ${product.name}：退回庫存，運輸 -${formatEmission(product.transport)} kg CO2e，支出 -$${formatMoney(product.price)}。`);
+      render();
+    }
+
+    function resetSimulation() {
+      state = initialState();
+      render();
+    }
+
+    function productDetails(product) {
+      return `
+        <span class="product-meta"><span class="money">$${formatMoney(product.price)}</span>｜製造 ${formatEmission(product.manufacture)} kg</span>
+        <span class="product-origin">${product.origin}｜${formatMoney(product.distance)} km｜運輸 ${formatEmission(product.transport)} kg</span>
+      `;
+    }
+
+    function renderCatalog() {
+      elements.catalog.innerHTML = products.map((product) => `
+        <button class="product-button ${product.category}" type="button" data-action="list" data-product="${product.id}">
+          <span class="mini-art">${productArt(product.category)}</span>
+          <span class="product-info">
+            <span class="product-name">上架 ${product.name}</span>
+            ${productDetails(product)}
+          </span>
+        </button>
+      `).join('');
+    }
+
+    function renderMall() {
+      const stocked = products.filter((product) => state.stock[product.id] > 0);
+      if (stocked.length === 0) {
+        elements.mallShelf.innerHTML = '<div class="empty">商場尚無商品<br>請先從左側商品庫上架</div>';
+        return;
+      }
+
+      elements.mallShelf.innerHTML = stocked.map((product) => `
+        <article class="product-card ${product.category}">
+          <span class="mini-art">${productArt(product.category)}</span>
+          <span class="product-info">
+            <span class="product-name">${product.name} <span class="count">庫存 ${state.stock[product.id]}</span></span>
+            ${productDetails(product)}
+            <span class="button-row">
+              <button class="buy-button" type="button" data-action="buy" data-product="${product.id}">購買</button>
+              <button class="cancel-button" type="button" data-action="cancel-list" data-product="${product.id}">取消上架</button>
+            </span>
+          </span>
+        </article>
+      `).join('');
+    }
+
+    function renderCart() {
+      const bought = products.filter((product) => state.cart[product.id] > 0);
+      if (bought.length === 0) {
+        elements.cartList.innerHTML = '<div class="empty">購物車是空的<br>請從商場購買商品</div>';
+        return;
+      }
+
+      elements.cartList.innerHTML = bought.map((product) => `
+        <article class="cart-item ${product.category}">
+          <span class="mini-art">${productArt(product.category)}</span>
+          <span class="product-info">
+            <span class="product-name">${product.name} x ${state.cart[product.id]}</span>
+            <span class="product-meta">小計 $${formatMoney(product.price * state.cart[product.id])}</span>
+            <span class="product-origin">已增加運輸碳排 ${formatEmission(product.transport * state.cart[product.id])} kg</span>
+            <button class="cancel-button" type="button" data-action="cancel-buy" data-product="${product.id}">取消購買一件</button>
+          </span>
+        </article>
+      `).join('');
+    }
+
+    function renderLogs() {
+      if (state.logs.length === 0) {
+        elements.logContainer.innerHTML = '<p class="empty-log">尚無紀錄。先上架商品，再從商場購買，系統會分別計算製造與運輸碳排。</p>';
+        return;
+      }
+
+      elements.logContainer.innerHTML = `<ol class="log-list">${state.logs.map((log) => `<li>${log}</li>`).join('')}</ol>`;
+    }
+
+    function render() {
+      elements.totalEmission.textContent = formatEmission(state.totalEmission);
+      elements.manufactureEmission.textContent = formatEmission(state.manufactureEmission);
+      elements.transportEmission.textContent = formatEmission(state.transportEmission);
+      elements.moneySpent.textContent = formatMoney(state.moneySpent);
+      elements.globalStatus.textContent = state.globalStatus;
+      renderCatalog();
+      renderMall();
+      renderCart();
+      renderLogs();
+    }
+
+    function handleClick(event) {
+      const button = event.target.closest('button[data-action]');
+      if (!button) {
+        return;
+      }
+
+      if (button.dataset.action === 'list') {
+        listProduct(button.dataset.product);
+      }
+
+      if (button.dataset.action === 'buy') {
+        buyProduct(button.dataset.product);
+      }
+
+      if (button.dataset.action === 'cancel-list') {
+        cancelListing(button.dataset.product);
+      }
+
+      if (button.dataset.action === 'cancel-buy') {
+        cancelPurchase(button.dataset.product);
+      }
+    }
+
+    document.addEventListener('click', handleClick);
+    elements.resetButton.addEventListener('click', resetSimulation);
+    render();
+  </script>
+</body>
+</html>
