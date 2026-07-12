@@ -54,7 +54,7 @@
       margin: 0 auto;
       padding: 12px 0;
       display: grid;
-      grid-template-rows: auto auto 1fr auto;
+      grid-template-rows: auto auto auto 1fr auto;
       gap: 9px;
     }
 
@@ -103,6 +103,7 @@
 
     .status-board,
     .metric,
+    .chart-panel,
     .zone,
     .timeline {
       border: 1px solid var(--line);
@@ -146,6 +147,60 @@
       font-size: 0.72rem;
       font-weight: 850;
       white-space: nowrap;
+    }
+
+    .chart-panel {
+      min-height: 82px;
+      padding: 10px 12px;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .chart-panel h2 {
+      font-size: 0.96rem;
+      white-space: nowrap;
+    }
+
+    .bar-chart {
+      min-width: 0;
+      display: grid;
+      gap: 6px;
+    }
+
+    .bar-row {
+      display: grid;
+      grid-template-columns: 74px 1fr 96px;
+      gap: 8px;
+      align-items: center;
+      color: var(--muted);
+      font-size: 0.74rem;
+      font-weight: 850;
+    }
+
+    .bar-track {
+      height: 12px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #ecf2ef;
+      border: 1px solid var(--line);
+    }
+
+    .bar-fill {
+      width: 0%;
+      height: 100%;
+      border-radius: 999px;
+      background: var(--green);
+      transition: width 280ms ease;
+    }
+
+    .bar-fill.transport {
+      background: var(--blue);
+    }
+
+    .bar-fill.total {
+      background: var(--amber);
     }
 
     .platform {
@@ -436,6 +491,40 @@
       color: var(--ink);
     }
 
+    .carbon-fx-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 20;
+      overflow: hidden;
+    }
+
+    .co2-bubble {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: rgba(32, 116, 72, 0.9);
+      color: white;
+      box-shadow: 0 12px 26px rgba(29, 52, 40, 0.22);
+      font-size: 0.72rem;
+      font-weight: 950;
+      transform: translate(-50%, -50%);
+      animation: carbonDrift 900ms ease-in-out forwards;
+    }
+
+    .co2-bubble.transport {
+      background: rgba(37, 111, 147, 0.92);
+    }
+
+    .co2-bubble.negative {
+      background: rgba(181, 74, 55, 0.92);
+    }
+
     @keyframes pop {
       from {
         transform: translateY(8px) scale(0.98);
@@ -460,6 +549,28 @@
       }
     }
 
+    @keyframes carbonDrift {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.72);
+      }
+
+      18% {
+        opacity: 1;
+      }
+
+      78% {
+        opacity: 1;
+      }
+
+      100% {
+        left: var(--end-x);
+        top: var(--end-y);
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(1.15);
+      }
+    }
+
     @media (max-width: 860px), (orientation: portrait) {
       body {
         overflow: auto;
@@ -472,9 +583,14 @@
 
       .top,
       .dashboard,
+      .chart-panel,
       .platform,
       .timeline {
         grid-template-columns: 1fr;
+      }
+
+      .bar-row {
+        grid-template-columns: 64px 1fr 78px;
       }
 
       .catalog,
@@ -521,6 +637,27 @@
       </article>
     </section>
 
+    <section class="chart-panel" aria-label="碳排長條圖">
+      <h2>碳排長條圖</h2>
+      <div class="bar-chart">
+        <div class="bar-row">
+          <span>製造碳排</span>
+          <span class="bar-track"><span class="bar-fill manufacture" id="manufactureBar"></span></span>
+          <span id="manufactureBarValue">0.0 kg</span>
+        </div>
+        <div class="bar-row">
+          <span>運輸碳排</span>
+          <span class="bar-track"><span class="bar-fill transport" id="transportBar"></span></span>
+          <span id="transportBarValue">0.0 kg</span>
+        </div>
+        <div class="bar-row">
+          <span>總碳排</span>
+          <span class="bar-track"><span class="bar-fill total" id="totalBar"></span></span>
+          <span id="totalBarValue">0.0 kg</span>
+        </div>
+      </div>
+    </section>
+
     <section class="platform" aria-label="企業、商場與購物車">
       <article class="zone business-zone">
         <div class="zone-head">
@@ -564,6 +701,7 @@
       <div id="logContainer"></div>
     </section>
   </main>
+  <div class="carbon-fx-layer" id="carbonFxLayer" aria-hidden="true"></div>
 
   <script>
     const products = [
@@ -605,11 +743,18 @@
       transportEmission: document.querySelector('#transportEmission'),
       moneySpent: document.querySelector('#moneySpent'),
       globalStatus: document.querySelector('#globalStatus'),
+      manufactureBar: document.querySelector('#manufactureBar'),
+      transportBar: document.querySelector('#transportBar'),
+      totalBar: document.querySelector('#totalBar'),
+      manufactureBarValue: document.querySelector('#manufactureBarValue'),
+      transportBarValue: document.querySelector('#transportBarValue'),
+      totalBarValue: document.querySelector('#totalBarValue'),
       catalog: document.querySelector('#catalog'),
       mallShelf: document.querySelector('#mallShelf'),
       cartList: document.querySelector('#cartList'),
       logContainer: document.querySelector('#logContainer'),
-      resetButton: document.querySelector('#resetButton')
+      resetButton: document.querySelector('#resetButton'),
+      carbonFxLayer: document.querySelector('#carbonFxLayer')
     };
 
     function formatEmission(value) {
@@ -620,27 +765,25 @@
       return value.toLocaleString('zh-TW');
     }
 
-    function productArt(category) {
-      const color = {
-        food: ['#b54a37', '#f3b29e'],
-        veg: ['#207448', '#b7df89'],
-        appliance: ['#256f93', '#b9d9e8'],
-        vehicle: ['#256f93', '#c7d8e5']
-      }[category];
+    function productArt(product) {
+      const art = {
+        steak: `<svg viewBox="0 0 48 48" aria-label="牛排"><path d="M7 25c0-12 13-20 26-14 12 5 13 19 2 25-13 8-28 1-28-11z" fill="#a94434"/><path d="M16 20c5-5 14-5 21 0" stroke="#f5b79f" stroke-width="5" stroke-linecap="round"/><circle cx="25" cy="27" r="6" fill="#f1d0bd"/></svg>`,
+        fish: `<svg viewBox="0 0 48 48" aria-label="魚排"><path d="M7 24c10-12 25-12 34 0-9 12-24 12-34 0z" fill="#d4833d"/><path d="M41 24l-10-8v16z" fill="#bf6d31"/><circle cx="17" cy="21" r="2.5" fill="#392b24"/><path d="M24 16c4 6 4 11 0 17M32 17c4 5 4 9 0 14" stroke="#ffe1bf" stroke-width="3" stroke-linecap="round"/></svg>`,
+        can: `<svg viewBox="0 0 48 48" aria-label="罐頭"><ellipse cx="24" cy="11" rx="13" ry="5" fill="#d7dfe3" stroke="#7d8d96" stroke-width="2"/><path d="M11 11v25c0 3 6 6 13 6s13-3 13-6V11" fill="#f0c45d" stroke="#7d8d96" stroke-width="2"/><ellipse cx="24" cy="36" rx="13" ry="5" fill="#e3aa38" stroke="#7d8d96" stroke-width="2"/><rect x="15" y="19" width="18" height="10" rx="2" fill="#fff5d7"/></svg>`,
+        chickenRice: `<svg viewBox="0 0 48 48" aria-label="雞肉飯"><path d="M8 26h32l-4 13H12z" fill="#d7eef2" stroke="#4d8793" stroke-width="2"/><ellipse cx="24" cy="26" rx="16" ry="7" fill="#f7f0d7"/><path d="M17 23c3-5 10-6 14-1 3 4-1 9-7 9s-10-4-7-8z" fill="#c97942"/><path d="M29 18l7-4" stroke="#348b4f" stroke-width="3" stroke-linecap="round"/></svg>`,
+        curry: `<svg viewBox="0 0 48 48" aria-label="咖哩飯"><ellipse cx="24" cy="25" rx="17" ry="12" fill="#f1f5f2" stroke="#8b9b93" stroke-width="2"/><path d="M10 25c5-9 20-12 30-2-2 9-10 13-20 12-7-1-11-4-10-10z" fill="#c9822e"/><circle cx="21" cy="25" r="3" fill="#f0c35c"/><circle cx="30" cy="22" r="3" fill="#e89041"/><path d="M14 17c4-4 12-5 18-2" stroke="#fff3cf" stroke-width="4" stroke-linecap="round"/></svg>`,
+        stirVeg: `<svg viewBox="0 0 48 48" aria-label="清炒食蔬"><path d="M8 32c9-8 22-12 34-6-4 12-22 15-34 6z" fill="#63b85d"/><path d="M12 31c8-2 17-4 26-6" stroke="#dff4bf" stroke-width="4" stroke-linecap="round"/><path d="M18 20c-2-8 7-14 15-11 1 8-6 14-15 11z" fill="#87cf68"/></svg>`,
+        salad: `<svg viewBox="0 0 48 48" aria-label="沙拉"><path d="M10 27h28c-2 12-8 16-14 16s-12-4-14-16z" fill="#dceee2" stroke="#5aa46a" stroke-width="2"/><circle cx="17" cy="23" r="5" fill="#e8574d"/><circle cx="25" cy="18" r="6" fill="#75bd5c"/><circle cx="32" cy="24" r="5" fill="#f0c84e"/><path d="M14 28h20" stroke="#5aa46a" stroke-width="3" stroke-linecap="round"/></svg>`,
+        beefNoodle: `<svg viewBox="0 0 48 48" aria-label="牛肉麵"><path d="M8 24h32l-5 16H13z" fill="#e8f1f2" stroke="#657e86" stroke-width="2"/><ellipse cx="24" cy="24" rx="16" ry="7" fill="#b86b35"/><path d="M14 21c8 4 15 0 22 4M16 26c7-3 13 2 21-1" stroke="#f3d291" stroke-width="2" stroke-linecap="round"/><rect x="20" y="16" width="9" height="6" rx="2" fill="#7b3c28"/></svg>`,
+        fridge: `<svg viewBox="0 0 48 48" aria-label="冰箱"><rect x="14" y="5" width="20" height="38" rx="4" fill="#d7edf4" stroke="#24739a" stroke-width="3"/><path d="M14 19h20" stroke="#24739a" stroke-width="3"/><path d="M29 11v4M29 26v9" stroke="#24739a" stroke-width="3" stroke-linecap="round"/><path d="M18 31h7" stroke="#9ed5e5" stroke-width="3" stroke-linecap="round"/></svg>`,
+        oldAc: `<svg viewBox="0 0 48 48" aria-label="傳統冷氣"><rect x="7" y="12" width="34" height="21" rx="4" fill="#e6edf0" stroke="#557f91" stroke-width="3"/><path d="M13 22h22M14 29h18" stroke="#557f91" stroke-width="3" stroke-linecap="round"/><path d="M12 39c4-5 9-5 13 0M26 39c4-5 9-5 13 0" stroke="#6aa3bd" stroke-width="3" stroke-linecap="round"/></svg>`,
+        efficientAc: `<svg viewBox="0 0 48 48" aria-label="節能冷氣"><rect x="7" y="12" width="34" height="21" rx="4" fill="#e4f5ee" stroke="#24845d" stroke-width="3"/><path d="M14 24h20" stroke="#24845d" stroke-width="3" stroke-linecap="round"/><path d="M16 39c5-6 11-6 16 0" stroke="#62b6cc" stroke-width="3" stroke-linecap="round"/><path d="M31 16c-6 1-10 5-11 12 7-1 11-5 11-12z" fill="#83cc65"/></svg>`,
+        microwave: `<svg viewBox="0 0 48 48" aria-label="微波爐"><rect x="6" y="12" width="36" height="25" rx="4" fill="#e6eef2" stroke="#527f93" stroke-width="3"/><rect x="12" y="17" width="18" height="14" rx="2" fill="#b9d9e8"/><circle cx="36" cy="20" r="2.5" fill="#527f93"/><circle cx="36" cy="29" r="2.5" fill="#527f93"/><path d="M16 25c4-4 7 4 11 0" stroke="#527f93" stroke-width="2" fill="none"/></svg>`,
+        riceCooker: `<svg viewBox="0 0 48 48" aria-label="電鍋"><path d="M10 22h28v12c0 5-5 8-14 8s-14-3-14-8z" fill="#dfe9ed" stroke="#527f93" stroke-width="3"/><path d="M16 22c1-7 15-7 16 0" fill="none" stroke="#527f93" stroke-width="3"/><circle cx="24" cy="32" r="4" fill="#f3c663"/><path d="M14 17h20" stroke="#527f93" stroke-width="3" stroke-linecap="round"/></svg>`,
+        ev: `<svg viewBox="0 0 48 48" aria-label="電動車"><path d="M7 28l6-10h21l7 10v8H7z" fill="#c7d8e5" stroke="#256f93" stroke-width="3" stroke-linejoin="round"/><circle cx="16" cy="36" r="4" fill="#256f93"/><circle cx="34" cy="36" r="4" fill="#256f93"/><path d="M24 19l-4 7h6l-4 8" fill="none" stroke="#f4c84d" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`
+      };
 
-      if (category === 'veg') {
-        return `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M9 31c8-17 22-21 32-17-1 17-17 25-32 17z" fill="${color[1]}"/><path d="M14 31c8-4 15-9 22-16" stroke="${color[0]}" stroke-width="4" stroke-linecap="round"/></svg>`;
-      }
-
-      if (category === 'appliance') {
-        return `<svg viewBox="0 0 48 48" aria-hidden="true"><rect x="13" y="7" width="22" height="34" rx="4" fill="${color[1]}" stroke="${color[0]}" stroke-width="3"/><path d="M13 20h22M29 13v4M29 27v8" stroke="${color[0]}" stroke-width="3" stroke-linecap="round"/></svg>`;
-      }
-
-      if (category === 'vehicle') {
-        return `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M8 27l6-10h20l6 10v9H8z" fill="${color[1]}" stroke="${color[0]}" stroke-width="3" stroke-linejoin="round"/><circle cx="16" cy="36" r="4" fill="${color[0]}"/><circle cx="34" cy="36" r="4" fill="${color[0]}"/><path d="M23 20l-3 6h6l-3 6" fill="none" stroke="${color[0]}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-      }
-
-      return `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M8 25c0-11 12-19 25-13 11 5 12 18 2 24-12 7-27 1-27-11z" fill="${color[0]}"/><path d="M16 21c5-5 13-5 20 0" stroke="${color[1]}" stroke-width="5" stroke-linecap="round"/><circle cx="26" cy="27" r="6" fill="#f3d0bc"/></svg>`;
+      return art[product.id];
     }
 
     function addLog(message) {
@@ -648,17 +791,39 @@
       state.logs = state.logs.slice(0, maxLogs);
     }
 
-    function listProduct(productId) {
+    function animateCarbonFlow(sourceElement, amount, type = 'manufacture') {
+      if (!sourceElement) {
+        return;
+      }
+
+      const targetElement = elements.totalEmission.closest('.metric');
+      const start = sourceElement.getBoundingClientRect();
+      const end = targetElement.getBoundingClientRect();
+      const bubble = document.createElement('span');
+      const isNegative = amount < 0;
+
+      bubble.className = `co2-bubble ${type} ${isNegative ? 'negative' : ''}`;
+      bubble.textContent = `${isNegative ? '-' : '+'}CO2`;
+      bubble.style.left = `${start.left + start.width / 2}px`;
+      bubble.style.top = `${start.top + start.height / 2}px`;
+      bubble.style.setProperty('--end-x', `${end.left + end.width / 2}px`);
+      bubble.style.setProperty('--end-y', `${end.top + end.height / 2}px`);
+      elements.carbonFxLayer.appendChild(bubble);
+      bubble.addEventListener('animationend', () => bubble.remove(), { once: true });
+    }
+
+    function listProduct(productId, sourceElement) {
       const product = productMap[productId];
       state.stock[productId] += 1;
       state.manufactureEmission += product.manufacture;
       state.totalEmission += product.manufacture;
       state.globalStatus = `企業上架 ${product.name}：製造碳排 +${formatEmission(product.manufacture)} kg CO2e，價格 $${formatMoney(product.price)}。`;
       addLog(`<strong>上架</strong> ${product.name}：製造 +${formatEmission(product.manufacture)} kg CO2e，售價 $${formatMoney(product.price)}。`);
+      animateCarbonFlow(sourceElement, product.manufacture, 'manufacture');
       render();
     }
 
-    function buyProduct(productId) {
+    function buyProduct(productId, sourceElement) {
       const product = productMap[productId];
       if (state.stock[productId] <= 0) {
         state.globalStatus = `商場目前沒有 ${product.name}，請企業先上架。`;
@@ -673,10 +838,11 @@
       state.moneySpent += product.price;
       state.globalStatus = `人民購買 ${product.name}：${product.origin}、運輸 ${formatMoney(product.distance)} km，額外運輸碳排 +${formatEmission(product.transport)} kg CO2e。`;
       addLog(`<strong>購買</strong> ${product.name}：$${formatMoney(product.price)}，${product.distance} km 運輸 +${formatEmission(product.transport)} kg CO2e。`);
+      animateCarbonFlow(sourceElement, product.transport, 'transport');
       render();
     }
 
-    function cancelListing(productId) {
+    function cancelListing(productId, sourceElement) {
       const product = productMap[productId];
       if (state.stock[productId] <= 0) {
         state.globalStatus = `商場目前沒有可取消上架的 ${product.name}。`;
@@ -689,10 +855,11 @@
       state.totalEmission = Math.max(0, state.totalEmission - product.manufacture);
       state.globalStatus = `已取消上架 ${product.name}：製造碳排 -${formatEmission(product.manufacture)} kg CO2e。`;
       addLog(`<strong>取消上架</strong> ${product.name}：製造 -${formatEmission(product.manufacture)} kg CO2e。`);
+      animateCarbonFlow(sourceElement, -product.manufacture, 'manufacture');
       render();
     }
 
-    function cancelPurchase(productId) {
+    function cancelPurchase(productId, sourceElement) {
       const product = productMap[productId];
       if (state.cart[productId] <= 0) {
         state.globalStatus = `購物車目前沒有可取消購買的 ${product.name}。`;
@@ -707,6 +874,7 @@
       state.moneySpent = Math.max(0, state.moneySpent - product.price);
       state.globalStatus = `已取消購買 ${product.name}：退回商場庫存，運輸碳排 -${formatEmission(product.transport)} kg CO2e，支出 -$${formatMoney(product.price)}。`;
       addLog(`<strong>取消購買</strong> ${product.name}：退回庫存，運輸 -${formatEmission(product.transport)} kg CO2e，支出 -$${formatMoney(product.price)}。`);
+      animateCarbonFlow(sourceElement, -product.transport, 'transport');
       render();
     }
 
@@ -725,7 +893,7 @@
     function renderCatalog() {
       elements.catalog.innerHTML = products.map((product) => `
         <button class="product-button ${product.category}" type="button" data-action="list" data-product="${product.id}">
-          <span class="mini-art">${productArt(product.category)}</span>
+          <span class="mini-art">${productArt(product)}</span>
           <span class="product-info">
             <span class="product-name">上架 ${product.name}</span>
             ${productDetails(product)}
@@ -743,7 +911,7 @@
 
       elements.mallShelf.innerHTML = stocked.map((product) => `
         <article class="product-card ${product.category}">
-          <span class="mini-art">${productArt(product.category)}</span>
+          <span class="mini-art">${productArt(product)}</span>
           <span class="product-info">
             <span class="product-name">${product.name} <span class="count">庫存 ${state.stock[product.id]}</span></span>
             ${productDetails(product)}
@@ -765,7 +933,7 @@
 
       elements.cartList.innerHTML = bought.map((product) => `
         <article class="cart-item ${product.category}">
-          <span class="mini-art">${productArt(product.category)}</span>
+          <span class="mini-art">${productArt(product)}</span>
           <span class="product-info">
             <span class="product-name">${product.name} x ${state.cart[product.id]}</span>
             <span class="product-meta">小計 $${formatMoney(product.price * state.cart[product.id])}</span>
@@ -785,6 +953,21 @@
       elements.logContainer.innerHTML = `<ol class="log-list">${state.logs.map((log) => `<li>${log}</li>`).join('')}</ol>`;
     }
 
+    function renderChart() {
+      const total = state.totalEmission;
+      const max = Math.max(total, state.manufactureEmission, state.transportEmission, 1);
+      const manufactureWidth = Math.min(100, (state.manufactureEmission / max) * 100);
+      const transportWidth = Math.min(100, (state.transportEmission / max) * 100);
+      const totalWidth = Math.min(100, (total / max) * 100);
+
+      elements.manufactureBar.style.width = `${manufactureWidth}%`;
+      elements.transportBar.style.width = `${transportWidth}%`;
+      elements.totalBar.style.width = `${totalWidth}%`;
+      elements.manufactureBarValue.textContent = `${formatEmission(state.manufactureEmission)} kg`;
+      elements.transportBarValue.textContent = `${formatEmission(state.transportEmission)} kg`;
+      elements.totalBarValue.textContent = `${formatEmission(total)} kg`;
+    }
+
     function render() {
       elements.totalEmission.textContent = formatEmission(state.totalEmission);
       elements.manufactureEmission.textContent = formatEmission(state.manufactureEmission);
@@ -795,6 +978,7 @@
       renderMall();
       renderCart();
       renderLogs();
+      renderChart();
     }
 
     function handleClick(event) {
@@ -804,19 +988,19 @@
       }
 
       if (button.dataset.action === 'list') {
-        listProduct(button.dataset.product);
+        listProduct(button.dataset.product, button);
       }
 
       if (button.dataset.action === 'buy') {
-        buyProduct(button.dataset.product);
+        buyProduct(button.dataset.product, button);
       }
 
       if (button.dataset.action === 'cancel-list') {
-        cancelListing(button.dataset.product);
+        cancelListing(button.dataset.product, button);
       }
 
       if (button.dataset.action === 'cancel-buy') {
-        cancelPurchase(button.dataset.product);
+        cancelPurchase(button.dataset.product, button);
       }
     }
 
